@@ -1,0 +1,14 @@
+sourceCompatibility = 1.8
+[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+
+sourceSets.main.java.srcDirs = [ "src/" ]
+
+eclipse.project.name = appName + "-core"
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile files('../lib/jrand-0.2.7-alpha.jar')
+}
