@@ -1,0 +1,14 @@
+
+skin.png
+size: 64,64
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+blank
+  rotate: false
+  xy: 1, 1
+  size: 50, 50
+  split: 0, 0, 0, 0
+  orig: 50, 50
+  offset: 0, 0
+  index: -1

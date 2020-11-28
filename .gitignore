@@ -1,5 +1,6 @@
 ## Java
-
+out
+desktop/out
 *.class
 *.war
 *.ear
@@ -113,3 +114,4 @@ Thumbs.db
 /ios/xcode/native/
 /ios/IOSLauncher.app
 /ios/IOSLauncher.app.dSYM
+out/Sandbox.jar

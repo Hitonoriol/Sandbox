@@ -1,7 +1,13 @@
 package hitonoriol.sandbox;
 
-import java.util.Random;
-
 public class Utils {
-    public static Random random = new Random();
+
+    public static Enum<?> nextEnum(Enum<?> enm) {
+        Enum<?>[] vals = enm.getClass().getEnumConstants();
+        return vals[(enm.ordinal() + 1) % vals.length];
+    }
+
+    public static void out(String str) {
+        System.out.println(str);
+    }
 }

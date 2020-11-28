@@ -1,33 +1,50 @@
 package hitonoriol.sandbox;
 
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.physics.box2d.*;
 import me.xdrop.jrand.JRand;
+import me.xdrop.jrand.generators.basics.FloatGenerator;
 
 public class PhysBody {
     Body body;
+    Type type = Type.Box;
     final Sprite sprite;
     private final World world;
+    private static final FloatGenerator rand = JRand.flt().range(0f, 0.125f);
 
-    public PhysBody(World world, Sprite sprite, float x, float y) {
+    public PhysBody(World world, Type type, float x, float y) {
         this.world = world;
-        this.sprite = sprite;
-        sprite.setPosition(x, y);
-        body = createBoxBody(JRand.flt().range(0.1f, 2.5f).gen());
-        Sandbox.out("Created a new body at: " + x + ", " + y);
+        this.type = type;
+        this.sprite = new Sprite(type.getTexture());
+        sprite.setPosition(x * Sandbox.PPM, y * Sandbox.PPM);
+        body = createBody(rand.gen(), 1f, rand.gen());
+        Utils.out("Created a new body at: " + x + ", " + y);
     }
 
-    private Body createBoxBody(float density) {
+    private Body createBody(float density, float friction, float restitution) {
         BodyDef bodyDef = new BodyDef();
         bodyDef.type = BodyDef.BodyType.DynamicBody;
-        bodyDef.position.set(sprite.getX(), sprite.getY());
+        bodyDef.position.set(sprite.getX() / Sandbox.PPM, sprite.getY() / Sandbox.PPM);
+        bodyDef.linearDamping = 0;
 
-        PolygonShape shape = new PolygonShape();
-        shape.setAsBox(sprite.getWidth() / 2, sprite.getHeight() / 2);
-
+        Shape shape;
         FixtureDef fixtureDef = new FixtureDef();
+
+        if (type == Type.Circle) {
+            shape = new CircleShape();
+            shape.setRadius(sprite.getWidth() / Sandbox.PPM / 2f);
+            Utils.out("Creatin circle!!!1");
+        } else {
+            shape = new PolygonShape();
+            ((PolygonShape) shape).setAsBox(sprite.getWidth() / Sandbox.PPM / 2f,
+                    sprite.getHeight() / Sandbox.PPM / 2f);
+        }
+
         fixtureDef.shape = shape;
         fixtureDef.density = density;
+        fixtureDef.friction = friction;
+        fixtureDef.restitution = restitution;
 
         Body body = world.createBody(bodyDef);
         body.createFixture(fixtureDef);
@@ -37,8 +54,8 @@ public class PhysBody {
     }
 
     public Sprite updateSprite() {
-        sprite.setPosition(body.getPosition().x - sprite.getWidth() / 2f,
-                body.getPosition().y - sprite.getHeight() / 2f);
+        sprite.setPosition((body.getPosition().x * Sandbox.PPM) - (sprite.getWidth() / 2f),
+                (body.getPosition().y * Sandbox.PPM) - (sprite.getHeight() / 2f));
         sprite.setRotation((float) Math.toDegrees(body.getAngle()));
         return sprite;
     }
@@ -48,5 +65,21 @@ public class PhysBody {
             if (fixture.testPoint(x, y))
                 return true;
         return false;
+    }
+
+    public enum Type {
+        Box, Circle;
+
+        Texture getTexture() {
+            switch (this) {
+
+                case Box:
+                    return Resources.box;
+                case Circle:
+                    return Resources.circle;
+            }
+
+            return null;
+        }
     }
 }
