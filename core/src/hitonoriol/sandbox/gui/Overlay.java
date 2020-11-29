@@ -22,10 +22,12 @@ public class Overlay extends Stage {
     private void initBottomTable() {
         TextButton modeBtn = new TextButton(Mouse.mode.name(), Gui.skin);
         TextButton bodyTypeBtn = new TextButton(Mouse.spawnType.name(), Gui.skin);
+        TextButton propButton = new TextButton("Edit", Gui.skin);
 
         bottomTable.defaults().size(BTN_WIDTH, BTN_HEIGHT).padLeft(7);
         bottomTable.add(buttonTable("Mode", modeBtn));
-        bottomTable.add(buttonTable("Body type", bodyTypeBtn));
+        bottomTable.add(buttonTable("Body Type", bodyTypeBtn));
+        bottomTable.add(buttonTable("Properties", propButton));
         bottomTable.align(Align.bottomLeft);
 
         bottomTable.addListener(new OverlayMouseoverListener());
@@ -47,6 +49,13 @@ public class Overlay extends Stage {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 bodyTypeBtn.setText(Mouse.nextSpawnType().name());
+            }
+        });
+
+        propButton.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                new PropDialog().show(actor.getStage());
             }
         });
     }

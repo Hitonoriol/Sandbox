@@ -87,7 +87,7 @@ public class Sandbox extends InputAdapter implements Screen {
         systemDef.destroyByAge = true;
 
         particleSystem = new ParticleSystem(world, systemDef);
-        particleSystem.setParticleDensity(0.02f);
+        particleSystem.setParticleDensity(0.113f);
 
         particleDef = new ParticleGroupDef();
         particleDef.flags.add(ParticleDef.ParticleType.b2_waterParticle);
@@ -95,7 +95,7 @@ public class Sandbox extends InputAdapter implements Screen {
         CircleShape partShape = new CircleShape();
         partShape.setRadius(20f / PPM);
         particleDef.shape = partShape;
-        particleDef.lifetime = 60f;
+        particleDef.lifetime = 600f;
         particleDef.angularVelocity = 10f;
         particleDef.stride = 0.075f;
 
@@ -111,7 +111,7 @@ public class Sandbox extends InputAdapter implements Screen {
                 Mouse.screenToWorld(camera, x, y);
 
                 if (Mouse.mode == Mouse.Mode.Spawn && Mouse.spawnType.spawnedByClick())
-                    bodies.add(new PhysBody(world, Mouse.spawnType, Mouse.worldCoords.x, Mouse.worldCoords.y));
+                    bodies.add(new PhysBody(world, Mouse.spawnType, Mouse.fixtureDef, Mouse.worldCoords.x, Mouse.worldCoords.y));
             }
         });
 
@@ -211,6 +211,8 @@ public class Sandbox extends InputAdapter implements Screen {
     }
 
     private void initWorld() {
+        Mouse.fixtureDef.density = 0.01f;
+
         BodyDef groundDef = new BodyDef();
         groundDef.type = BodyDef.BodyType.StaticBody;
         float width = Gdx.graphics.getWidth() / PPM;

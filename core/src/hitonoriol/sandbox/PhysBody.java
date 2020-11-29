@@ -3,33 +3,29 @@ package hitonoriol.sandbox;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.physics.box2d.*;
-import me.xdrop.jrand.JRand;
-import me.xdrop.jrand.generators.basics.FloatGenerator;
 
 public class PhysBody {
     Body body;
     Type type;
     final Sprite sprite;
     private final World world;
-    private static final FloatGenerator rand = JRand.flt().range(0f, 0.125f);
 
-    public PhysBody(World world, Type type, float x, float y) {
+    public PhysBody(World world, Type type, FixtureDef fixture, float x, float y) {
         this.world = world;
         this.type = type;
         this.sprite = new Sprite(type.getTexture());
         sprite.setPosition(x * Sandbox.PPM, y * Sandbox.PPM);
-        body = createBody(rand.gen(), rand.gen(), rand.gen());
+        body = createBody(fixture);
         Utils.out("Created a new body at: " + x + ", " + y);
     }
 
-    private Body createBody(float density, float friction, float restitution) {
+    private Body createBody(FixtureDef fixtureDef) {
         BodyDef bodyDef = new BodyDef();
         bodyDef.type = BodyDef.BodyType.DynamicBody;
         bodyDef.position.set(sprite.getX() / Sandbox.PPM, sprite.getY() / Sandbox.PPM);
         bodyDef.linearDamping = 0;
 
         Shape shape;
-        FixtureDef fixtureDef = new FixtureDef();
 
         if (type == Type.Circle) {
             shape = new CircleShape();
@@ -42,9 +38,6 @@ public class PhysBody {
         }
 
         fixtureDef.shape = shape;
-        fixtureDef.density = density;
-        fixtureDef.friction = friction;
-        fixtureDef.restitution = restitution;
 
         Body body = world.createBody(bodyDef);
         body.createFixture(fixtureDef);
@@ -82,7 +75,7 @@ public class PhysBody {
             return Resources.box;
         }
 
-        boolean spawnedByClick() {
+        public boolean spawnedByClick() {
             return this != Water;
         }
     }

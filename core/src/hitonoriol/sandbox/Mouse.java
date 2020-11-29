@@ -3,10 +3,13 @@ package hitonoriol.sandbox;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.physics.box2d.FixtureDef;
 
 public class Mouse {
     public static Mode mode = Mode.Spawn;
     public static PhysBody.Type spawnType = PhysBody.Type.Box;
+    public static FixtureDef fixtureDef = new FixtureDef();
+
     static Vector3 worldCoords = new Vector3();
 
     public static Vector3 screenToWorld(OrthographicCamera camera, float x, float y) {
