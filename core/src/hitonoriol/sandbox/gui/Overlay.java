@@ -12,7 +12,7 @@ public class Overlay extends Stage {
     Table bottomTable = new Table();
 
     float BTN_WIDTH = 100;
-    float BTN_HEIGHT = 35;
+    float BTN_HEIGHT = 30;
 
     public Overlay() {
         super();
@@ -23,18 +23,23 @@ public class Overlay extends Stage {
         TextButton modeBtn = new TextButton(Mouse.mode.name(), Gui.skin);
         TextButton bodyTypeBtn = new TextButton(Mouse.spawnType.name(), Gui.skin);
 
-        bottomTable.defaults().size(BTN_WIDTH, BTN_HEIGHT).pad(5);
+        bottomTable.defaults().size(BTN_WIDTH, BTN_HEIGHT).padLeft(7);
         bottomTable.add(buttonTable("Mode", modeBtn));
         bottomTable.add(buttonTable("Body type", bodyTypeBtn));
         bottomTable.align(Align.bottomLeft);
 
         bottomTable.addListener(new OverlayMouseoverListener());
         super.addActor(bottomTable);
+        bottomTable.moveBy(0, 14);
 
         modeBtn.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 modeBtn.setText(Mouse.nextMode().name());
+                if (Mouse.mode != Mouse.Mode.Spawn)
+                    bodyTypeBtn.setDisabled(true);
+                else
+                    bodyTypeBtn.setDisabled(false);
             }
         });
 

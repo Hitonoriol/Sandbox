@@ -17,6 +17,10 @@ public class Mouse {
         return worldCoords;
     }
 
+    public static Vector3 screenToWorld(OrthographicCamera camera) {
+        return screenToWorld(camera, Gdx.input.getX(), Gdx.graphics.getHeight() - Gdx.input.getY());
+    }
+
     public static Mode nextMode() {
         return (Mouse.mode = (Mouse.Mode) Utils.nextEnum(Mouse.mode));
     }

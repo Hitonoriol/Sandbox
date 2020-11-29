@@ -11,8 +11,7 @@ public class Main extends Game {
     public void create() {
         Resources.load();
         Gui.init();
-        sandbox = new Sandbox();
-        this.setScreen(sandbox);
+        this.setScreen(sandbox = new Sandbox());
     }
 
     @Override

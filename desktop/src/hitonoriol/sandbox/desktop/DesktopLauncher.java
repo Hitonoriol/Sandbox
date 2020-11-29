@@ -13,6 +13,7 @@ public class DesktopLauncher {
 		config.foregroundFPS = 60;
 		config.backgroundFPS = 0;
 		config.vSyncEnabled = true;
+		config.title = "Sandbox";
 		new LwjglApplication(new Main(), config);
 	}
 }

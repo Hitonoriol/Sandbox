@@ -11,4 +11,5 @@ repositories {
 
 dependencies {
     compile files('../lib/jrand-0.2.7-alpha.jar')
+    compile group: 'net.dermetfan.libgdx-utils', name: 'libgdx-utils-box2d', version: '0.13.4'
 }

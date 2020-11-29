@@ -8,7 +8,7 @@ import me.xdrop.jrand.generators.basics.FloatGenerator;
 
 public class PhysBody {
     Body body;
-    Type type = Type.Box;
+    Type type;
     final Sprite sprite;
     private final World world;
     private static final FloatGenerator rand = JRand.flt().range(0f, 0.125f);
@@ -18,7 +18,7 @@ public class PhysBody {
         this.type = type;
         this.sprite = new Sprite(type.getTexture());
         sprite.setPosition(x * Sandbox.PPM, y * Sandbox.PPM);
-        body = createBody(rand.gen(), 1f, rand.gen());
+        body = createBody(rand.gen(), rand.gen(), rand.gen());
         Utils.out("Created a new body at: " + x + ", " + y);
     }
 
@@ -68,7 +68,7 @@ public class PhysBody {
     }
 
     public enum Type {
-        Box, Circle;
+        Box, Circle, Water;
 
         Texture getTexture() {
             switch (this) {
@@ -79,7 +79,11 @@ public class PhysBody {
                     return Resources.circle;
             }
 
-            return null;
+            return Resources.box;
+        }
+
+        boolean spawnedByClick() {
+            return this != Water;
         }
     }
 }
