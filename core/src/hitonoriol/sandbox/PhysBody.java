@@ -61,7 +61,7 @@ public class PhysBody {
     }
 
     public enum Type {
-        Box, Circle, Water;
+        Box, Circle, Particle;
 
         Texture getTexture() {
             switch (this) {
@@ -76,7 +76,7 @@ public class PhysBody {
         }
 
         public boolean spawnedByClick() {
-            return this != Water;
+            return this != Particle;
         }
     }
 }

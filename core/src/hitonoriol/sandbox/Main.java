@@ -5,7 +5,7 @@ import hitonoriol.sandbox.gui.Gui;
 
 public class Main extends Game {
 
-    Sandbox sandbox;
+    public static Sandbox sandbox;
 
     @Override
     public void create() {

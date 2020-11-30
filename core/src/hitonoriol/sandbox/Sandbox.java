@@ -10,10 +10,12 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.physics.box2d.joints.MouseJoint;
 import com.badlogic.gdx.physics.box2d.joints.MouseJointDef;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.DragListener;
 import finnstr.libgdx.liquidfun.*;
@@ -27,7 +29,7 @@ import java.util.Set;
 
 public class Sandbox extends InputAdapter implements Screen {
 
-    final float ZOOM = 1f;
+    float ZOOM = 1f;
     public static final float PPM = 100f;
     final float TIME_STEP = 1f / 60f;
     final int VEL_ITER = 10;
@@ -44,7 +46,6 @@ public class Sandbox extends InputAdapter implements Screen {
     MouseJoint joint;
 
     ParticleSystem particleSystem;
-    ParticleGroupDef particleDef;
     ParticleDebugRenderer particleDebugRenderer;
 
     Body ground;
@@ -74,8 +75,8 @@ public class Sandbox extends InputAdapter implements Screen {
     }
 
     private void spawnParticles(float x, float y) {
-        particleDef.position.set(x, y);
-        particleSystem.createParticleGroup(particleDef);
+        Mouse.particleDef.position.set(x, y);
+        particleSystem.createParticleGroup(Mouse.particleDef);
         if (particleSystem.getParticleCount() > particleDebugRenderer.getMaxParticleNumber())
             particleDebugRenderer.setMaxParticleNumber(particleSystem.getParticleCount() + 1000);
     }
@@ -89,20 +90,46 @@ public class Sandbox extends InputAdapter implements Screen {
         particleSystem = new ParticleSystem(world, systemDef);
         particleSystem.setParticleDensity(0.113f);
 
-        particleDef = new ParticleGroupDef();
-        particleDef.flags.add(ParticleDef.ParticleType.b2_waterParticle);
-        particleDef.linearVelocity.set(0, 0);
+        Mouse.particleDef = new ParticleGroupDef();
+        Mouse.particleDef.flags.clear();
+        Mouse.particleDef.flags.add(ParticleDef.ParticleType.b2_waterParticle);
+        Mouse.particleDef.linearVelocity.set(0, 0);
         CircleShape partShape = new CircleShape();
-        partShape.setRadius(20f / PPM);
-        particleDef.shape = partShape;
-        particleDef.lifetime = 600f;
-        particleDef.angularVelocity = 10f;
-        particleDef.stride = 0.075f;
+        partShape.setRadius(25f / PPM);
+        Mouse.particleDef.shape = partShape;
+        Mouse.particleDef.angularVelocity = 10f;
+        Mouse.particleDef.stride = 0.075f;
 
         particleDebugRenderer = new ParticleDebugRenderer(new Color(0x87ceeb7f), 1000);
     }
 
+    final float ZOOM_STEP = 0.02f;
+
     private void initMouseListeners() {
+        initClickListeners();
+        initDragListener();
+
+        overlay.addListener(new InputListener() {
+            @Override
+            public boolean keyUp(InputEvent event, int keycode) {
+                if (keycode == Input.Keys.ESCAPE)
+                    clearWorld();
+                return true;
+            }
+
+            @Override
+            public boolean scrolled(InputEvent event, float x, float y, float amountX, float amountY) {
+                if (amountY < 0)
+                    ZOOM += ZOOM_STEP;
+                else
+                    ZOOM -= ZOOM_STEP;
+                updateCamera();
+                return false;
+            }
+        });
+    }
+
+    private void initClickListeners() {
         overlay.addListener(new ClickListener(Input.Buttons.LEFT) {
             @Override
             public void clicked(InputEvent event, float x, float y) {
@@ -144,38 +171,22 @@ public class Sandbox extends InputAdapter implements Screen {
                 }, Mouse.worldCoords.x, Mouse.worldCoords.y, Mouse.worldCoords.x, Mouse.worldCoords.y);
             }
         });
+    }
 
+    private Vector3 prevDragPos;
+
+    private void initDragListener() {
         overlay.addListener(new DragListener() {
 
             @Override
             public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
                 heldButtons.add(button);
-                if (Mouse.mode != Mouse.Mode.Move)
-                    return true;
                 Mouse.screenToWorld(camera, x, y);
-                world.QueryAABB(new QueryCallback() {
-                    @Override
-                    public boolean reportFixture(Fixture fixture) {
-                        if (!fixture.testPoint(Mouse.worldCoords.x, Mouse.worldCoords.y))
-                            return true;
 
-                        jointDef.bodyB = fixture.getBody();
-                        jointDef.target.set(Mouse.worldCoords.x, Mouse.worldCoords.y);
-                        joint = (MouseJoint) world.createJoint(jointDef);
-
-                        return true;
-                    }
-
-                    @Override
-                    public boolean reportParticle(ParticleSystem particleSystem, int i) {
-                        return false;
-                    }
-
-                    @Override
-                    public boolean shouldQueryParticleSystem(ParticleSystem particleSystem) {
-                        return false;
-                    }
-                }, Mouse.worldCoords.x, Mouse.worldCoords.y, Mouse.worldCoords.x, Mouse.worldCoords.y);
+                if (button == Input.Buttons.LEFT) {
+                    if (Mouse.mode == Mouse.Mode.Move)
+                        createMouseJoint(x, y);
+                }
 
                 return true;
             }
@@ -183,24 +194,69 @@ public class Sandbox extends InputAdapter implements Screen {
             @Override
             public void touchUp(InputEvent event, float x, float y, int pointer, int button) {
                 heldButtons.remove(button);
-                if (joint == null)
-                    return;
-
-                world.destroyJoint(joint);
-                joint = null;
+                prevDragPos = null;
+                if (Mouse.mode == Mouse.Mode.Move)
+                    destroyMouseJoint();
             }
 
             @Override
             public void touchDragged(InputEvent event, float x, float y, int pointer) {
-                if (joint == null)
-                    return;
-
                 Mouse.screenToWorld(camera, x, y);
 
-                joint.setTarget(jointTarget.set(Mouse.worldCoords.x, Mouse.worldCoords.y));
+                if (heldButtons.contains(Input.Buttons.LEFT)) {
+                    if (Mouse.mode == Mouse.Mode.Move) {
+                        if (joint == null)
+                            return;
+
+                        joint.setTarget(jointTarget.set(Mouse.worldCoords.x, Mouse.worldCoords.y));
+                    }
+                }
+
+                if (heldButtons.contains(Input.Buttons.MIDDLE)) {
+                    x = Gdx.input.getX(pointer);
+                    y = Gdx.input.getY(pointer);
+                    if (prevDragPos == null) prevDragPos = new Vector3(x, y, 0);
+
+                    camera.position.add(prevDragPos.x - x, y - prevDragPos.y, 0);
+                    prevDragPos.set(x, y, 0);
+                }
             }
 
         });
+    }
+
+    private void destroyMouseJoint() {
+        if (joint == null)
+            return;
+
+        world.destroyJoint(joint);
+        joint = null;
+    }
+
+    private void createMouseJoint(float x, float y) {
+        world.QueryAABB(new QueryCallback() {
+            @Override
+            public boolean reportFixture(Fixture fixture) {
+                if (!fixture.testPoint(Mouse.worldCoords.x, Mouse.worldCoords.y))
+                    return true;
+
+                jointDef.bodyB = fixture.getBody();
+                jointDef.target.set(Mouse.worldCoords.x, Mouse.worldCoords.y);
+                joint = (MouseJoint) world.createJoint(jointDef);
+
+                return true;
+            }
+
+            @Override
+            public boolean reportParticle(ParticleSystem particleSystem, int i) {
+                return false;
+            }
+
+            @Override
+            public boolean shouldQueryParticleSystem(ParticleSystem particleSystem) {
+                return false;
+            }
+        }, Mouse.worldCoords.x, Mouse.worldCoords.y, Mouse.worldCoords.x, Mouse.worldCoords.y);
     }
 
     private PhysBody findBody(Body body) {
@@ -216,7 +272,7 @@ public class Sandbox extends InputAdapter implements Screen {
         BodyDef groundDef = new BodyDef();
         groundDef.type = BodyDef.BodyType.StaticBody;
         float width = Gdx.graphics.getWidth() / PPM;
-        float height = (Gdx.graphics.getHeight() - 100) / PPM;
+        float height = (Gdx.graphics.getHeight() - 105) / PPM;
         groundDef.position.set(0, 0);
         FixtureDef fixtureDef = new FixtureDef();
         EdgeShape edgeShape = new EdgeShape();
@@ -243,6 +299,14 @@ public class Sandbox extends InputAdapter implements Screen {
         shape.dispose();
     }
 
+    public void clearWorld() {
+        for (PhysBody body : bodies)
+            delQueue.add(body.body);
+        bodies.clear();
+        particleSystem.destroyParticleSystem();
+        initParticles();
+    }
+
     private void pollHeldButtonActions() {
         if (Gui.gameUnfocused)
             return;
@@ -251,12 +315,18 @@ public class Sandbox extends InputAdapter implements Screen {
         Mouse.screenToWorld(camera);
 
         if (lmb && Mouse.mode == Mouse.Mode.Spawn) {
-            if (Mouse.spawnType == PhysBody.Type.Water)
+            if (Mouse.spawnType == PhysBody.Type.Particle)
                 spawnParticles(Mouse.worldCoords.x, Mouse.worldCoords.y);
         }
     }
 
     private Matrix4 renderMatrix;
+
+    private void updateCamera() {
+        camera.viewportWidth = Gdx.graphics.getWidth() / ZOOM;
+        camera.viewportHeight = Gdx.graphics.getHeight() / ZOOM;
+        camera.update();
+    }
 
     @Override
     public void render(float delta) {
@@ -275,8 +345,6 @@ public class Sandbox extends InputAdapter implements Screen {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         batch.setProjectionMatrix(camera.combined);
-        overlay.act();
-        overlay.draw();
         batch.begin();
 
         for (PhysBody body : bodies)
@@ -287,6 +355,9 @@ public class Sandbox extends InputAdapter implements Screen {
         renderMatrix = batch.getProjectionMatrix().cpy().scale(PPM, PPM, 0);
         debugRenderer.render(world, renderMatrix);
         particleDebugRenderer.render(particleSystem, PPM, renderMatrix);
+
+        overlay.act();
+        overlay.draw();
     }
 
     @Override
